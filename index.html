@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Online</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+        :root {
+            --primary: #646cff;
+            --bg: #1a1a1a;
+            --surface: #242424;
+            --text: rgba(255, 255, 255, 0.87);
+            --danger: #ff4646;
+            --success: #4caf50;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(to right, #646cff, #ff4646);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-container {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .hangman-draw {
+            height: 200px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hangman-draw svg {
+            stroke: var(--text);
+            stroke-width: 4;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .word-display {
+            font-size: 2.5rem;
+            letter-spacing: 0.5rem;
+            margin: 2rem 0;
+            font-weight: bold;
+            min-height: 60px;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 8px;
+            margin-top: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .key {
+            background: #333;
+            border: none;
+            color: white;
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key:hover:not(:disabled) {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .key:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .key.correct {
+            background: var(--success);
+        }
+
+        .key.wrong {
+            background: var(--danger);
+        }
+
+        .status {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 3rem;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Hangman Parts */
+        .part {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Hangman</h1>
+
+    <div class="game-container">
+        <div class="hangman-draw">
+            <!-- SVG Hangman -->
+            <svg width="200" height="200" viewBox="0 0 200 200">
+                <!-- Base -->
+                <line x1="20" y1="180" x2="180" y2="180" />
+                <line x1="40" y1="180" x2="40" y2="20" />
+                <line x1="40" y1="20" x2="120" y2="20" />
+                <line x1="120" y1="20" x2="120" y2="40" />
+
+                <!-- Man -->
+                <circle class="part" id="head" cx="120" cy="60" r="20" />
+                <line class="part" id="body" x1="120" y1="80" x2="120" y2="140" />
+                <line class="part" id="arm-l" x1="120" y1="100" x2="90" y2="130" />
+                <line class="part" id="arm-r" x1="120" y1="100" x2="150" y2="130" />
+                <line class="part" id="leg-l" x1="120" y1="140" x2="100" y2="180" />
+                <line class="part" id="leg-r" x1="120" y1="140" x2="140" y2="180" />
+            </svg>
+        </div>
+
+        <div class="word-display" id="word-display">
+            Loading...
+        </div>
+
+        <div class="status" id="status">
+            Chances left: 6
+        </div>
+
+        <div class="keyboard" id="keyboard">
+            <!-- Keys generated by JS -->
+        </div>
+    </div>
+
+    <div class="modal" id="game-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Game Over</h2>
+            <p id="modal-msg">The word was: ...</p>
+            <button class="btn" onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        const parts = ['head', 'body', 'arm-l', 'arm-r', 'leg-l', 'leg-r'];
+
+        async function startGame() {
+            try {
+                const res = await fetch('/api/start', { method: 'POST' });
+                const data = await res.json();
+                sessionId = data.session_id;
+
+                // Reset UI
+                document.getElementById('game-modal').style.display = 'none';
+                document.getElementById('word-display').innerText = '_ '.repeat(data.word_length);
+                document.getElementById('status').innerText = `Chances left: ${data.chances}`;
+
+                // Reset Hangman
+                document.querySelectorAll('.part').forEach(el => el.style.display = 'none');
+
+                // Generate Keyboard
+                const keyboard = document.getElementById('keyboard');
+                keyboard.innerHTML = '';
+                for (let i = 65; i <= 90; i++) {
+                    const letter = String.fromCharCode(i);
+                    const btn = document.createElement('button');
+                    btn.className = 'key';
+                    btn.innerText = letter;
+                    btn.onclick = () => guessLetter(letter, btn);
+                    keyboard.appendChild(btn);
+                }
+            } catch (e) {
+                console.error("Error starting game:", e);
+                alert("Failed to start game. Make sure the server is running.");
+            }
+        }
+
+        async function guessLetter(letter, btnElement) {
+            if (!sessionId) return;
+
+            btnElement.disabled = true;
+
+            try {
+                const res = await fetch('/api/guess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, letter: letter })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Update Word Display
+                document.getElementById('word-display').innerText = data.display_word.join(' ');
+                document.getElementById('status').innerText = `Chances left: ${data.chances}`;
+
+                // Update Button Style
+                if (data.correct_guess) {
+                    btnElement.classList.add('correct');
+                } else {
+                    btnElement.classList.add('wrong');
+                    // Show next hangman part
+                    const wrongGuesses = 7 - data.chances; // Assuming 7 total chances, but parts are 6. Adjust logic.
+                    // Actually server says 7 chances. My SVG has 6 parts.
+                    // Let's map chances left to parts shown.
+                    // 6 chances left -> 0 parts
+                    // 5 chances left -> 1 part (head)
+                    // ...
+                    // 0 chances left -> 6 parts
+
+                    const partIndex = 6 - data.chances;
+                    if (partIndex >= 0 && partIndex < parts.length) {
+                        document.getElementById(parts[partIndex]).style.display = 'block';
+                    }
+                }
+
+                // Check Game Over
+                if (data.game_over) {
+                    const modal = document.getElementById('game-modal');
+                    const title = document.getElementById('modal-title');
+                    const msg = document.getElementById('modal-msg');
+
+                    modal.style.display = 'flex';
+                    if (data.won) {
+                        title.innerText = "YOU WON! 🎉";
+                        title.style.color = "var(--success)";
+                        msg.innerText = `Great job! The word was ${data.secret_word || '...'}`;
+                    } else {
+                        title.innerText = "GAME OVER 💀";
+                        title.style.color = "var(--danger)";
+                        msg.innerText = `The word was ${data.secret_word}`;
+                    }
+                }
+
+            } catch (e) {
+                console.error("Error guessing:", e);
+            }
+        }
+
+        // Start game on load
+        startGame();
+
+    </script>
+</body>
+
+</html>
