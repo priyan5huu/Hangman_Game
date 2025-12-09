@@ -558,6 +558,11 @@
                     if (res.ok) {
                         const data = await res.json();
                         updateUI(data);
+                    } else if (res.status === 404) {
+                        // Session expired or server restarted
+                        stopPolling();
+                        alert("Game session expired or server restarted.");
+                        showMainMenu();
                     }
                 } catch (e) { console.error("Polling error:", e); }
             }, 2000);
