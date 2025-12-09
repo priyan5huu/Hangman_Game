@@ -23,7 +23,18 @@ def index():
 @app.route('/api/start', methods=['POST'])
 def start_game():
     session_id = os.urandom(16).hex()
-    word = random.choice(WORDS)
+    
+    data = request.get_json(silent=True) or {}
+    custom_word = data.get('custom_word')
+    
+    if custom_word and custom_word.strip():
+        word = custom_word.strip().upper()
+        # Basic validation: ensure it contains only letters
+        if not word.isalpha():
+             return jsonify({'error': 'Word must only contain letters'}), 400
+    else:
+        word = random.choice(WORDS)
+
     games[session_id] = {
         'word': word,
         'guessed': [],
@@ -31,10 +42,15 @@ def start_game():
         'game_over': False,
         'won': False
     }
+    display_word = ['_' for _ in word]
     return jsonify({
         'session_id': session_id,
         'word_length': len(word),
-        'chances': 7
+        'display_word': display_word,
+        'chances': 7,
+        'guessed': [],
+        'game_over': False,
+        'won': False
     })
 
 @app.route('/api/guess', methods=['POST'])
@@ -77,6 +93,27 @@ def guess_letter():
         'game_over': game['game_over'],
         'won': game['won'],
         'correct_guess': letter in game['word'],
+        'secret_word': game['word'] if game['game_over'] else None
+    })
+
+@app.route('/api/state', methods=['GET'])
+def get_game_state():
+    session_id = request.args.get('session_id')
+    
+    if not session_id or session_id not in games:
+        return jsonify({'error': 'Invalid session'}), 400
+        
+    game = games[session_id]
+    
+    # Return the current state of the word
+    display_word = [l if l in game['guessed'] else '_' for l in game['word']]
+    
+    return jsonify({
+        'display_word': display_word,
+        'chances': game['chances'],
+        'game_over': game['game_over'],
+        'won': game['won'],
+        'guessed': game['guessed'],
         'secret_word': game['word'] if game['game_over'] else None
     })
 
