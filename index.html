@@ -3,56 +3,166 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hangman Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-
         :root {
-            --primary: #646cff;
-            --bg: #1a1a1a;
-            --surface: #242424;
-            --text: rgba(255, 255, 255, 0.87);
-            --danger: #ff4646;
-            --success: #4caf50;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+            --radius: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Nunito', sans-serif;
             background-color: var(--bg);
             color: var(--text);
+            margin: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            transition: background-color 0.3s;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Decorative Background Blobs */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.5;
+        }
+
+        body::before {
+            background: #c7d2fe;
+            top: -200px;
+            left: -200px;
+        }
+
+        body::after {
+            background: #fecdd3;
+            bottom: -200px;
+            right: -200px;
         }
 
         h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            background: linear-gradient(to right, #646cff, #ff4646);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .game-container {
-            background: var(--surface);
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            font-weight: 900;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            color: var(--primary);
+            margin: 0 0 1.5rem 0;
             text-align: center;
-            max-width: 800px;
-            width: 90%;
+            letter-spacing: -1px;
+            text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
         }
 
+        .container {
+            background: var(--surface);
+            padding: clamp(1.5rem, 4vw, 3rem);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            width: 100%;
+            max-width: 300px;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: var(--primary-dark);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 2px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text);
+            background: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-danger {
+            background: var(--secondary);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: #e11d48;
+            box-shadow: 0 8px 16px rgba(244, 63, 94, 0.4);
+        }
+
+        /* Inputs */
+        input {
+            width: 100%;
+            max-width: 300px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Hangman Drawing */
         .hangman-draw {
             height: 200px;
-            margin-bottom: 2rem;
+            margin: 1rem 0 2rem;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -66,38 +176,62 @@
             stroke-linejoin: round;
         }
 
-        .word-display {
-            font-size: 2.5rem;
-            letter-spacing: 0.5rem;
-            margin: 2rem 0;
-            font-weight: bold;
-            min-height: 60px;
+        .part {
+            display: none;
+            stroke: var(--secondary);
+            animation: draw 0.5s ease forwards;
         }
 
+        @keyframes draw {
+            from {
+                stroke-dasharray: 100;
+                stroke-dashoffset: 100;
+                opacity: 0;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Word Display */
+        .word-display {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            letter-spacing: 0.5rem;
+            color: var(--text);
+            margin: 1rem 0 2rem;
+            min-height: 80px;
+            word-break: break-all;
+        }
+
+        /* Keyboard */
         .keyboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
             gap: 8px;
-            margin-top: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            max-width: 650px;
+            margin: 0 auto;
         }
 
         .key {
-            background: #333;
-            border: none;
-            color: white;
-            padding: 12px;
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 12px 0;
             font-family: inherit;
-            font-size: 1.2rem;
-            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
 
         .key:hover:not(:disabled) {
-            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--primary);
             transform: translateY(-2px);
         }
 
@@ -105,22 +239,49 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+            border-color: var(--border);
+            background: #f1f5f9;
         }
 
         .key.correct {
-            background: var(--success);
+            background: #22c55e;
+            border-color: #22c55e;
+            color: white;
         }
 
         .key.wrong {
-            background: var(--danger);
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
         }
 
-        .status {
-            margin-top: 1rem;
+        /* Room Info Badge */
+        .room-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #e0e7ff;
+            color: var(--primary-dark);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
             font-size: 1.2rem;
-            color: #888;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
 
+        .room-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .room-badge span {
+            font-family: monospace;
+            font-size: 1.4rem;
+            margin-left: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -128,19 +289,23 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(5px);
             justify-content: center;
             align-items: center;
             z-index: 100;
+            padding: 20px;
         }
 
         .modal-content {
-            background: var(--surface);
+            background: white;
             padding: 3rem;
-            border-radius: 16px;
+            border-radius: var(--radius);
             text-align: center;
-            max-width: 400px;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 450px;
+            width: 100%;
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         @keyframes popIn {
@@ -155,26 +320,26 @@
             }
         }
 
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            margin-top: 1rem;
-            transition: transform 0.2s;
-        }
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            .keyboard {
+                gap: 6px;
+                grid-template-columns: repeat(7, 1fr);
+            }
 
-        .btn:hover {
-            transform: scale(1.05);
-        }
+            .key {
+                font-size: 1rem;
+                padding: 10px 0;
+                border-radius: 8px;
+            }
 
-        /* Hangman Parts */
-        .part {
-            display: none;
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
@@ -184,89 +349,96 @@
     <h1>Hangman</h1>
 
     <!-- Main Menu -->
-    <div id="main-menu" class="game-container">
-        <h2>Select Mode</h2>
-        <button class="btn" onclick="startSinglePlayer()">Single Player</button>
-        <button class="btn" onclick="showMultiplayerLobby()" style="background: #e91e63;">Multiplayer</button>
+    <div id="main-menu" class="container">
+        <h2 style="color: var(--text-light); margin-bottom: 2rem; font-weight: 600;">Ready to play?</h2>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <button class="btn" onclick="startSinglePlayer()">Single Player</button>
+            <button class="btn btn-secondary" onclick="showMultiplayerLobby()">Play with Friends</button>
+        </div>
     </div>
 
     <!-- Multiplayer Lobby -->
-    <div id="mp-lobby" class="game-container" style="display: none;">
-        <h2>Multiplayer</h2>
-        <button class="btn" onclick="showMainMenu()"
-            style="background: #444; font-size: 0.8rem; padding: 0.5rem 1rem; margin-bottom: 1rem;">&larr; Back</button>
+    <div id="mp-lobby" class="container" style="display: none;">
+        <div style="position: absolute; top: 20px; left: 20px;">
+            <button onclick="showMainMenu()"
+                style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light);">←</button>
+        </div>
 
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
+        <h2 style="margin-top: 0;">Multiplayer</h2>
+
+        <div style="margin-top: 2rem; display: grid; gap: 2rem;">
             <!-- Create Room -->
-            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px;">
-                <h3>Create Room</h3>
-                <p style="font-size: 0.9rem; color: #aaa;">Set a word for your friend to guess!</p>
-                <input type="password" id="custom-word" placeholder="Secret Word (Optional)"
-                    style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; width: 80%; margin-bottom: 10px;">
-                <br>
+            <div style="background: #f8fafc; padding: 2rem; border-radius: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 1rem 0; color: var(--primary);">Create Room</h3>
+                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">Set a secret word for your
+                    friend.</p>
+                <input type="password" id="custom-word" placeholder="Enter Secret Word">
                 <button class="btn" onclick="createMultiplayerGame()">Create & Invite</button>
             </div>
 
             <!-- Join Room -->
-            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px;">
-                <h3>Join Room</h3>
-                <input type="text" id="room-input" placeholder="Enter Room ID"
-                    style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; width: 80%; margin-bottom: 10px;">
-                <br>
-                <button class="btn" onclick="joinGame()" style="background: #e91e63;">Join Game</button>
+            <div style="background: #f8fafc; padding: 2rem; border-radius: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 1rem 0; color: var(--secondary);">Join Room</h3>
+                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">Enter the 6-character code.
+                </p>
+                <input type="text" id="room-input" placeholder="Room Code" maxlength="6"
+                    style="text-transform: uppercase;">
+                <button class="btn btn-danger" onclick="joinGame()">Join Game</button>
             </div>
         </div>
     </div>
 
-    <!-- Game Section (Hidden initially) -->
-    <div id="game-ui" class="game-container" style="display: none;">
-        <div id="room-info" style="margin-bottom: 1rem; color: #888; font-size: 0.9rem; display: none;">
-            Room ID: <span id="room-id-display" style="color: var(--primary); font-weight: bold; cursor: pointer;"
-                onclick="copyRoomId()" title="Click to copy"></span>
-            <span id="copy-msg" style="display: none; color: var(--success); margin-left: 5px;">Copied!</span>
+    <!-- Game UI -->
+    <div id="game-ui" class="container" style="display: none;">
+        <div id="room-info" style="display: none;">
+            <div class="room-badge" onclick="copyRoomId()" title="Click to Copy">
+                Room Code: <span id="room-id-display"></span>
+            </div>
+            <div id="copy-msg"
+                style="color: #22c55e; font-size: 0.9rem; height: 20px; margin-bottom: 10px; opacity: 0; transition: opacity 0.3s;">
+                Copied to clipboard!</div>
         </div>
 
         <div class="hangman-draw">
-            <!-- SVG Hangman -->
             <svg width="200" height="200" viewBox="0 0 200 200">
                 <!-- Base -->
-                <line x1="20" y1="180" x2="180" y2="180" />
-                <line x1="40" y1="180" x2="40" y2="20" />
-                <line x1="40" y1="20" x2="120" y2="20" />
-                <line x1="120" y1="20" x2="120" y2="40" />
+                <line x1="40" y1="180" x2="160" y2="180" stroke="#cbd5e1" />
+                <line x1="100" y1="180" x2="100" y2="20" stroke="#cbd5e1" />
+                <line x1="100" y1="20" x2="140" y2="20" stroke="#cbd5e1" />
+                <line x1="140" y1="20" x2="140" y2="40" stroke="#cbd5e1" />
 
                 <!-- Man -->
-                <circle class="part" id="head" cx="120" cy="60" r="20" />
-                <line class="part" id="body" x1="120" y1="80" x2="120" y2="140" />
-                <line class="part" id="arm-l" x1="120" y1="100" x2="90" y2="130" />
-                <line class="part" id="arm-r" x1="120" y1="100" x2="150" y2="130" />
-                <line class="part" id="leg-l" x1="120" y1="140" x2="100" y2="180" />
-                <line class="part" id="leg-r" x1="120" y1="140" x2="140" y2="180" />
+                <circle class="part" id="head" cx="140" cy="60" r="20" />
+                <line class="part" id="body" x1="140" y1="80" x2="140" y2="140" />
+                <line class="part" id="arm-l" x1="140" y1="100" x2="110" y2="130" />
+                <line class="part" id="arm-r" x1="140" y1="100" x2="170" y2="130" />
+                <line class="part" id="leg-l" x1="140" y1="140" x2="120" y2="180" />
+                <line class="part" id="leg-r" x1="140" y1="140" x2="160" y2="180" />
             </svg>
         </div>
 
-        <div class="word-display" id="word-display">
-            Loading...
+        <div class="word-display" id="word-display"></div>
+
+        <div style="color: var(--text-light); margin-bottom: 1rem; font-weight: 600;">
+            <span id="status">Chances left: 7</span>
         </div>
 
-        <div class="status" id="status">
-            Chances left: 7
-        </div>
+        <div class="keyboard" id="keyboard"></div>
 
-        <div class="keyboard" id="keyboard">
-            <!-- Keys generated by JS -->
-        </div>
-
-        <button class="btn" onclick="leaveGame()" style="margin-top: 2rem; background: #444; font-size: 0.9rem;">Exit to
-            Menu</button>
+        <button class="btn btn-secondary" onclick="leaveGame()"
+            style="margin-top: 3rem; max-width: 200px; font-size: 0.9rem;">Exit Game</button>
     </div>
 
+    <!-- Game Over Modal -->
     <div class="modal" id="game-modal">
         <div class="modal-content">
-            <h2 id="modal-title">Game Over</h2>
-            <p id="modal-msg">The word was: ...</p>
-            <button class="btn" onclick="resetGame()">Play Again</button>
-            <button class="btn" onclick="leaveGame()" style="background: #444; margin-left: 10px;">Exit</button>
+            <h2 id="modal-title" style="font-size: 2rem; margin-bottom: 0.5rem;">Game Over</h2>
+            <p id="modal-msg" style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 2rem;">The word was:
+                ...</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="btn" onclick="resetGame()">Play Again</button>
+                <button class="btn btn-secondary" onclick="leaveGame()">Exit to Menu</button>
+            </div>
         </div>
     </div>
 
@@ -293,6 +465,7 @@
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('mp-lobby').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
+            document.getElementById('game-modal').style.display = 'none';
 
             const roomInfo = document.getElementById('room-info');
             if (isMultiplayer) {
@@ -317,7 +490,6 @@
                 keyboard.appendChild(btn);
             }
 
-            // Start polling only for multiplayer
             if (isMultiplayer) {
                 startPolling();
             }
@@ -334,14 +506,13 @@
                 showGame(data.session_id, false);
                 updateUI(data);
             } catch (e) {
-                console.error("Error starting single player:", e);
+                console.error("Error:", e);
                 alert("Failed to start game.");
             }
         }
 
         async function createMultiplayerGame() {
             const customWord = document.getElementById('custom-word').value.trim();
-
             try {
                 const res = await fetch('/api/start', {
                     method: 'POST',
@@ -349,39 +520,26 @@
                     body: JSON.stringify({ custom_word: customWord })
                 });
                 const data = await res.json();
-
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-
+                if (data.error) { alert(data.error); return; }
                 showGame(data.session_id, true);
                 updateUI(data);
             } catch (e) {
-                console.error("Error creating multiplayer game:", e);
+                console.error("Error:", e);
                 alert("Failed to create game.");
             }
         }
 
         async function joinGame() {
-            const inputId = document.getElementById('room-input').value.trim();
-            if (!inputId) {
-                alert("Please enter a Room ID");
-                return;
-            }
-
-            // Verify session exists
+            const inputId = document.getElementById('room-input').value.trim().toUpperCase();
+            if (!inputId) { alert("Please enter a Room Code"); return; }
             try {
                 const res = await fetch(`/api/state?session_id=${inputId}`);
-                if (!res.ok) {
-                    alert("Invalid Room ID or game expired.");
-                    return;
-                }
+                if (!res.ok) { alert("Invalid Room Code or game expired."); return; }
                 const data = await res.json();
                 showGame(inputId, true);
                 updateUI(data);
             } catch (e) {
-                console.error("Error joining game:", e);
+                console.error("Error:", e);
                 alert("Failed to join game.");
             }
         }
@@ -400,14 +558,9 @@
                     if (res.ok) {
                         const data = await res.json();
                         updateUI(data);
-                    } else {
-                        // Game might have been deleted or server restarted
-                        // Optional: alert user
                     }
-                } catch (e) {
-                    console.error("Polling error:", e);
-                }
-            }, 2000); // Poll every 2 seconds
+                } catch (e) { console.error("Polling error:", e); }
+            }, 2000);
         }
 
         function stopPolling() {
@@ -416,22 +569,10 @@
         }
 
         function updateUI(data) {
-            // Update Word
             document.getElementById('word-display').innerText = data.display_word.join(' ');
             document.getElementById('status').innerText = `Chances left: ${data.chances}`;
 
             // Update Hangman Parts
-            // 7 chances total. 6 parts.
-            // 7 chances -> 0 parts
-            // 6 chances -> 1 part (head) ?? Wait, logic in previous code was slightly off or specific.
-            // Let's stick to: 7 chances max.
-            // If chances < 7, show parts.
-            // 6 chances left = 1 wrong guess = show part 0
-            // 0 chances left = 7 wrong guesses = show part 6 (but we only have 6 parts)
-            // Let's just show parts based on (7 - chances).
-            // If 7 chances, 0 wrong.
-            // If 0 chances, 7 wrong. Max parts is 6.
-
             document.querySelectorAll('.part').forEach(el => el.style.display = 'none');
             const wrongGuesses = 7 - data.chances;
             for (let i = 0; i < wrongGuesses; i++) {
@@ -446,16 +587,6 @@
                     const btn = document.getElementById('key-' + letter);
                     if (btn && !btn.disabled) {
                         btn.disabled = true;
-                        // We don't know if it was correct or wrong from just the list of guessed letters
-                        // without checking the word. But the server knows.
-                        // However, for simplicity, we can check against the display word.
-                        // If the letter is in the display word, it's correct.
-                        // Wait, display word has underscores.
-                        // We can infer correctness if the letter is NOT in the display word?
-                        // No, the display word only shows correct guesses.
-                        // So if letter is in display_word, it's correct.
-                        // If letter is NOT in display_word, it's wrong.
-
                         const isCorrect = data.display_word.includes(letter);
                         if (isCorrect) {
                             btn.classList.add('correct');
@@ -466,7 +597,7 @@
                 });
             }
 
-            // Game Over Modal
+            // Game Over
             if (data.game_over) {
                 stopPolling();
                 const modal = document.getElementById('game-modal');
@@ -476,11 +607,11 @@
                 modal.style.display = 'flex';
                 if (data.won) {
                     title.innerText = "YOU WON! 🎉";
-                    title.style.color = "var(--success)";
+                    title.style.color = "#22c55e";
                     msg.innerText = `Great job! The word was ${data.secret_word || '...'}`;
                 } else {
                     title.innerText = "GAME OVER 💀";
-                    title.style.color = "var(--danger)";
+                    title.style.color = "#f43f5e";
                     msg.innerText = `The word was ${data.secret_word}`;
                 }
             }
@@ -488,10 +619,7 @@
 
         async function guessLetter(letter, btnElement) {
             if (!sessionId) return;
-
-            // Optimistic UI update
             btnElement.disabled = true;
-
             try {
                 const res = await fetch('/api/guess', {
                     method: 'POST',
@@ -499,38 +627,30 @@
                     body: JSON.stringify({ session_id: sessionId, letter: letter })
                 });
                 const data = await res.json();
-
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-
+                if (data.error) { alert(data.error); return; }
                 updateUI(data);
-
             } catch (e) {
-                console.error("Error guessing:", e);
-                btnElement.disabled = false; // Re-enable on error
+                console.error("Error:", e);
+                btnElement.disabled = false;
             }
         }
 
         function resetGame() {
-            // For multiplayer, "Play Again" usually means creating a new room or resetting the current one.
-            // For simplicity, let's just create a new game.
-            createGame();
+            // Simple reset: go to menu
+            leaveGame();
         }
 
         function copyRoomId() {
             const id = document.getElementById('room-id-display').innerText;
             navigator.clipboard.writeText(id).then(() => {
                 const msg = document.getElementById('copy-msg');
-                msg.style.display = 'inline';
-                setTimeout(() => msg.style.display = 'none', 2000);
+                msg.style.opacity = '1';
+                setTimeout(() => msg.style.opacity = '0', 2000);
             });
         }
 
         // Initialize
         showMainMenu();
-
     </script>
 </body>
 

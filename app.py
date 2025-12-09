@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import random
 import os
+import string
 
 app = Flask(__name__, template_folder='.')
 
@@ -22,7 +23,9 @@ def index():
 
 @app.route('/api/start', methods=['POST'])
 def start_game():
-    session_id = os.urandom(16).hex()
+    # Generate a short, memorable 6-character room code
+    alphabet = string.ascii_uppercase + string.digits
+    session_id = ''.join(random.choices(alphabet, k=6))
     
     data = request.get_json(silent=True) or {}
     custom_word = data.get('custom_word')
